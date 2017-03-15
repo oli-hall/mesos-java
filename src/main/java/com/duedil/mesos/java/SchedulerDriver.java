@@ -1,13 +1,15 @@
 package com.duedil.mesos.java;
 
+import com.google.protobuf.ByteString;
+
 import org.apache.mesos.v1.Protos.AgentID;
 import org.apache.mesos.v1.Protos.ExecutorID;
 import org.apache.mesos.v1.Protos.Filters;
 import org.apache.mesos.v1.Protos.Offer.Operation;
 import org.apache.mesos.v1.Protos.OfferID;
 import org.apache.mesos.v1.Protos.Request;
-import org.apache.mesos.v1.Protos.Status;
-import org.apache.mesos.v1.Protos.Task;
+import org.apache.mesos.v1.Protos.TaskStatus;
+import org.apache.mesos.v1.Protos.TaskInfo;
 import org.apache.mesos.v1.Protos.TaskID;
 
 import java.util.List;
@@ -71,7 +73,7 @@ public interface SchedulerDriver {
      * declines offers in their entirety (see Scheduler.declineOffer). Note that passing a
      * single offer is also supported.
      */
-    void launchTasks(List<OfferID> offerIds, List<Task> tasks, Filters filters);
+    void launchTasks(List<OfferID> offerIds, List<TaskInfo> tasks, Filters filters);
 
     /**
      *  Kills the specified task. Note that attempting to kill a task is currently not
@@ -94,11 +96,11 @@ public interface SchedulerDriver {
     void acceptOffers(List<OfferID> offerIds, List<Operation> operations, Filters filters);
 
     /**
-     *  Declines an offer in its entirety and applies the specified filters on the resources
-     * (see mesos.proto for a description of Filters). Note that this can be done at any time,
-     * it is not necessary to do this within the Scheduler::resourceOffers callback.
+     *  Declines the given offers in their entirety and applies the specified filters on the
+     *  resources (see mesos.proto for a description of Filters). Note that this can be done
+     *  at any time, it is not necessary to do this within the Scheduler::resourceOffers callback.
      */
-    void declineOffer(OfferID offerId, Filters filters);
+    void declineOffers(List<OfferID> offerIds, Filters filters);
 
     /**
      *  Removes all filters previously set by the framework (via launchTasks()).  This
@@ -118,13 +120,13 @@ public interface SchedulerDriver {
      * requested via the constructor argument, otherwise a call to this method will cause
      * the driver to crash.
      */
-    void acknowledgeStatusUpdate(Status status);
+    void acknowledgeStatusUpdate(TaskStatus status);
 
     /**
      * Sends a message from the framework to one of its executors. These messages are best
      * effort; do not expect a framework message to be retransmitted in any reliable fashion.
      */
-    void sendFrameworkMessage(ExecutorID executorId, AgentID agentId, byte[] data);
+    void sendFrameworkMessage(ExecutorID executorId, AgentID agentId, ByteString data);
 
     /**
      * Allows the framework to query the status for non-terminal tasks. This causes the master
@@ -132,5 +134,5 @@ public interface SchedulerDriver {
      * that are no longer known will result in a TASK_LOST update. If statuses is empty, then
      * the master will send the latest status for each task currently known.
      */
-    void reconcileTasks(List<Task> tasks);
+    void reconcileTasks(List<TaskInfo> tasks);
 }
