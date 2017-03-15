@@ -35,25 +35,25 @@ public interface SchedulerDriver {
      */
     void stop(boolean failover);
 
-    /**
-     * Aborts the driver so that no more callbacks can be made to the scheduler.  The semantics
-     * of abort and stop have deliberately been separated so that code can detect an aborted
-     * driver (i.e., via the return status of SchedulerDriver.join), and instantiate and start
-     * another driver if desired (from within the same process.)
-     */
-    void abort();
+//    /**
+//     * Aborts the driver so that no more callbacks can be made to the scheduler.  The semantics
+//     * of abort and stop have deliberately been separated so that code can detect an aborted
+//     * driver (i.e., via the return status of SchedulerDriver.join), and instantiate and start
+//     * another driver if desired (from within the same process.)
+//     */
+//    void abort();
 
-    /**
-     * Waits for the driver to be stopped or aborted, possibly blocking the current thread
-     * indefinitely.  The return status of this function can be used to determine if the driver
-     * was aborted (see mesos.proto for a description of Status).
-     */
-    void join();
+//    /**
+//     * Waits for the driver to be stopped or aborted, possibly blocking the current thread
+//     * indefinitely.  The return status of this function can be used to determine if the driver
+//     * was aborted (see mesos.proto for a description of Status).
+//     */
+//    void join();
 
-    /**
-     * Starts and immediately joins (i.e., blocks on) the driver.
-     */
-    void run();
+//    /**
+//     * Starts and immediately joins (i.e., blocks on) the driver.
+//     */
+//    void run();
 
     /**
      * Requests resources from Mesos (see mesos.proto for a description of Request and how,
