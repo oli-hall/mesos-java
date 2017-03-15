@@ -83,7 +83,6 @@ import static org.apache.mesos.v1.scheduler.Protos.Call.Type.TEARDOWN;
 public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(MesosSchedulerDriver.class);
-
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
     private final Scheduler scheduler;
