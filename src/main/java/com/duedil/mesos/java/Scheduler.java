@@ -1,13 +1,14 @@
 package com.duedil.mesos.java;
 
+import com.google.protobuf.ByteString;
+
 import org.apache.mesos.v1.Protos.AgentID;
 import org.apache.mesos.v1.Protos.ExecutorID;
 import org.apache.mesos.v1.Protos.FrameworkID;
 import org.apache.mesos.v1.Protos.MasterInfo;
 import org.apache.mesos.v1.Protos.Offer;
 import org.apache.mesos.v1.Protos.OfferID;
-import org.apache.mesos.v1.scheduler.Protos.Event.Message;
-import org.apache.mesos.v1.scheduler.Protos.Event.Update;
+import org.apache.mesos.v1.Protos.TaskStatus;
 
 import java.util.List;
 
@@ -42,7 +43,7 @@ public interface Scheduler {
      * contain resources from a single slave.  Resources associated with an offer will not
      * be re-offered to _this_ framework until either (a) this framework has rejected those
      * resources (see SchedulerDriver.launchTasks) or (b) those resources have been rescinded
-     * (see Scheduler.offerRescinded).  Note that resources may be concurrently offered to
+     * (see Scheduler.offerRescinded).  Note that resources may be concurrently offered toØ
      * more than one framework at a time (depending on the allocator being used).  In that
      * case, the first framework to launch tasks using those resources will be able to use
      * them while the other frameworks will have those resources rescinded (or if a framework
@@ -70,13 +71,13 @@ public interface Scheduler {
      * time). If explicit acknowledgements are in use, the scheduler must acknowledge this
      * status on the driver.
      */
-    void statusUpdate(SchedulerDriver driver, Update status);
+    void statusUpdate(SchedulerDriver driver, TaskStatus status);
 
     /**
      * Invoked when an executor sends a message. These messages are best effort; do not expect a
      * framework message to be retransmitted in any reliable fashion.
      */
-    void frameworkMessage(SchedulerDriver driver, ExecutorID executorId, AgentID agentId, Message message);
+    void frameworkMessage(SchedulerDriver driver, ExecutorID executorId, AgentID agentId, ByteString message);
 
     /**
      * Invoked when a agent has been determined unreachable (e.g., machine failure, network
@@ -97,11 +98,11 @@ public interface Scheduler {
      * messages between the master and the scheduler to be dropped, this callback may not
      * be invoked.
      */
-    void executorLost(SchedulerDriver driver, ExecutorID executorId, AgentID agentId, Update status);
+    void executorLost(SchedulerDriver driver, ExecutorID executorId, AgentID agentId, int status);
 
     /**
      * Invoked when there is an unrecoverable error in the scheduler or scheduler driver.
      * The driver will be aborted BEFORE invoking this callback.
      */
-    void error(SchedulerDriver driver, Message message);
+    void error(SchedulerDriver driver, String message);
 }
