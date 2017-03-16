@@ -2,6 +2,8 @@ package com.duedil.mesos.java;
 
 import org.apache.mesos.v1.scheduler.Protos.Event;
 
+import java.net.URI;
+
 // TODO rename?
 public interface EventListener {
 
@@ -13,4 +15,6 @@ public interface EventListener {
 
     // TODO javadoc
     void setStreamId(String streamId);
+
+    void changeMaster(URI newMaster);
 }

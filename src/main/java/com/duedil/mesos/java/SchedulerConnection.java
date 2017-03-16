@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.duedil.mesos.java.Utils.schedulerEndpoint;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_TEMPORARY_REDIRECT;
 import static org.apache.mesos.v1.scheduler.Protos.Call;
@@ -45,16 +46,16 @@ public class SchedulerConnection extends Thread {
 
     private final FrameworkInfo framework;
     private final EventListener listener;
-    private final URI masterUri;
     private final FrameworkID frameworkId;
     private final int maxRetries;
+    private int retries = 0;
+    private URI masterUri;
 
     public SchedulerConnection(FrameworkInfo framework, EventListener listener, URI masterUri,
                                FrameworkID frameworkId) {
         this(framework, listener, masterUri, frameworkId, 5);
     }
 
-    // TODO need to think about how this is initialised
     public SchedulerConnection(FrameworkInfo framework, EventListener listener, URI masterUri,
                                FrameworkID frameworkId, int maxRetries) {
         this.framework = checkNotNull(framework);
@@ -72,31 +73,56 @@ public class SchedulerConnection extends Thread {
             try {
                 HttpResponse response = request.execute();
 
-                if (response.getStatusCode() != SC_OK) {
-                    // TODO do all bad responses get thrown as HTTP exceptions? if so, this is superfluous
+                if (response.getStatusCode() == SC_TEMPORARY_REDIRECT) {
+                    String location = response.getHeaders().get("Location").toString();
+                    masterUri = parseNewMaster(location);
+                    listener.changeMaster(masterUri);
+                    LOG.debug("Redirect received, updating master to " + masterUri.toString());
+                    backOff();
+                    continue;
+                } else if (response.getStatusCode() == SC_NOT_FOUND) {
+                    backOff();
+                    continue;
+                } else if (response.getStatusCode() != SC_OK) {
                     throw new RuntimeException(String.format("Received bad response code: %d", response.getStatusCode()));
                 }
+                resetRetries();
 
                 String streamId = response.getHeaders().get("Mesos-Stream-Id").toString();
                 listener.setStreamId(streamId.substring(1, streamId.length() - 1));
                 try {
                     processResponseStream(response);
                 } catch (IOException e) {
-                    LOG.warn(String.format("Lost connection to master: %s\nRetrying...", e.getMessage()));
-                    Thread.sleep(CONNECT_RETRY_INTERVAL_SECS * 1000);
+                    LOG.warn(String.format("Lost connection to master: %s. Retrying...", e.getMessage()));
+                    backOff();
                 }
             } catch (HttpResponseException e) {
-                if (e.getStatusCode() == SC_TEMPORARY_REDIRECT) {
-                    LOG.debug("Redirect received, points to %s" + e.getHeaders().get("Location").toString());
-                }
-                // TODO err
-                // can get a 307 or 404 when re-connecting :/
+                // TODO will this still occur?
                 throw new RuntimeException(String.format("Error subscribing to Mesos at %s: %d, %s", masterUri.toString(), e.getStatusCode(), e.getStatusMessage()), e);
             } catch (IOException e) {
-                // TODO failed when making request somehow
-            } catch (InterruptedException e) {
-                // TODO sleep interrupted
+                // TODO don't log full exception here?
+                LOG.error("Error subscribing to master", e);
+                backOff();
             }
+        }
+    }
+
+    private URI parseNewMaster(String location) {
+        return URI.create(String.format("http:%s", location.substring(1, location.length() - 25)));
+    }
+
+    private void resetRetries() {
+        retries = 0;
+    }
+
+    private void backOff() {
+        if (++retries >= maxRetries) {
+            throw new RuntimeException(String.format("Backed off more than %d times, aborting", maxRetries));
+        }
+        try {
+            Thread.sleep((long) (Math.pow(2, retries) * 1000));
+        } catch (InterruptedException e) {
+            LOG.error("Backoff interrupted", e);
         }
     }
 
@@ -126,8 +152,6 @@ public class SchedulerConnection extends Thread {
                 Event.Builder builder = Event.newBuilder();
                 parser.merge(message, builder);
                 Event event = builder.build();
-
-                LOG.debug("Received event:", event.toString());
                 listener.onEvent(event);
             }
         }
@@ -164,6 +188,8 @@ public class SchedulerConnection extends Thread {
         } catch (IOException e) {
             throw new RuntimeException("Error building Subscribe request", e);
         }
+
+        request.setThrowExceptionOnExecuteError(false);
         return request;
     }
 }

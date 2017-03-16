@@ -156,7 +156,8 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
         shutDown();
     }
 
-    private void changeMaster(URI newMaster) {
+    @Override
+    public void changeMaster(URI newMaster) {
         // TODO why the version request here?
         // TODO what is version used for?
         checkNotNull(newMaster);
@@ -173,7 +174,7 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
                             request.setParser(new ProtoObjectParser());
                         }
                     });
-
+            LOG.debug("Checking version at " + versionEndpoint(master));
             GenericUrl url = new GenericUrl(versionEndpoint(master));
             try {
                 HttpRequest request = requestFactory.buildGetRequest(url);
