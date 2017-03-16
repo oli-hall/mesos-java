@@ -1,5 +1,6 @@
 package com.duedil.mesos.java;
 
+import com.google.api.client.util.Base64;
 import com.google.api.client.util.Lists;
 import com.google.protobuf.ByteString;
 
@@ -87,6 +88,12 @@ public class DummyScheduler implements Scheduler {
                                                 .setValue(taskId.getValue())
                                                 .build()
                                 )
+                                .setCommand(
+                                        Protos.CommandInfo.newBuilder()
+                                                .setValue("echo Hello World!")
+                                                .build()
+                                )
+                                .setData(ByteString.copyFrom(Base64.encodeBase64("Hello, I'm a testing task!".getBytes())))
                                 .build()
                 ) // TODO a command etc
                 .addResources(
@@ -128,12 +135,16 @@ public class DummyScheduler implements Scheduler {
 
     @Override
     public void statusUpdate(SchedulerDriver driver, Protos.TaskStatus status) {
-        LOG.info("Task update: " + status.getState().toString());
         switch (status.getState()) {
             case TASK_FAILED:
                 LOG.error("Task failed: " + status.getMessage());
+                break;
+            case TASK_ERROR:
+                LOG.error("Error for task "  + status.getTaskId() + ": " + status.getMessage());
+                break;
+            default:
+                LOG.info("Task update: " + status.getState().toString());
         }
-
     }
 
     @Override
