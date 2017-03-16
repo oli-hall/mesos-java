@@ -2,6 +2,7 @@ package com.duedil.mesos.java;
 
 import org.apache.mesos.v1.scheduler.Protos.Event;
 
+// TODO rename?
 public interface EventListener {
 
     /**
@@ -9,4 +10,7 @@ public interface EventListener {
      * @param event The Protobuf object representing the event received.
      */
     void onEvent(Event event);
+
+    // TODO javadoc
+    void setStreamId(String streamId);
 }

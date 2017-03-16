@@ -215,27 +215,33 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
         }
     }
 
+    @Override
+    public void setStreamId(String streamId) {
+        this.streamId = streamId;
+    }
+
     private void onNoMasterDetectedMessage() {
         changeMaster(null);
     }
 
     private void send(Call body) {
-        // TODO headers
         // TODO lock?
         // TODO if not connected, raise exception
         checkNotNull(body);
-
-        // TODO stream ID?
-//        if (streamId is set) {
-//            // set stream id in headers
-//        }
 
         HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(
                 new HttpRequestInitializer() {
                     @Override
                     public void initialize(HttpRequest request) {
-                        // TODO ???
-                        request.setParser(new ProtoObjectParser());                    }
+                        request.setParser(new ProtoObjectParser());
+                        if (streamId != null) {
+                            HttpHeaders headers = new HttpHeaders();
+                            headers.set("Mesos-Stream-Id", streamId);
+                            headers.setContentType("application/json");
+                            headers.setAccept("application/json");
+                            request.setHeaders(headers);
+                        }
+                    }
                 });
 
         GenericUrl url = new GenericUrl(schedulerEndpoint(this.masterUri));

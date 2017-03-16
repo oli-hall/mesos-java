@@ -6,11 +6,13 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.protobuf.ProtoHttpContent;
 import com.google.api.client.protobuf.ProtoObjectParser;
 
+import org.apache.mesos.v1.scheduler.Protos;
 import org.apache.mesos.v1.scheduler.Protos.Event;
 import com.google.protobuf.util.JsonFormat;
 
@@ -56,40 +58,17 @@ public class SchedulerConnection extends Thread {
 
     @Override
     public void run() {
-        Subscribe.Builder subscribe = Subscribe.newBuilder()
-                .setFrameworkInfo(framework);
-
-        Call.Builder subCall = Call.newBuilder()
-                .setType(SUBSCRIBE)
-                .setSubscribe(subscribe);
-
-        if (frameworkId != null) {
-            subCall.setFrameworkId(frameworkId);
-        }
-
-
-        HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(
-                new HttpRequestInitializer() {
-                    @Override
-                    public void initialize(HttpRequest request) {
-                        request.setParser(new ProtoObjectParser());
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType("application/json");
-                        headers.setAccept("application/json");
-                        request.setHeaders(headers);
-                    }
-                });
-
+        HttpRequest request = createSubscribeRequest();
         try {
-            GenericUrl url = new GenericUrl(schedulerEndpoint(this.masterUri));
-            HttpRequest request = requestFactory.buildPostRequest(url, new ProtoHttpContent(subCall.build()));
-
             HttpResponse response = request.execute();
 
             if (response.getStatusCode() != SC_OK) {
                 // TODO probably don't throw a runtime here
                 throw new RuntimeException(String.format("Received bad response code: %d", response.getStatusCode()));
             }
+
+            String streamId = response.getHeaders().get("Mesos-Stream-Id").toString();
+            listener.setStreamId(streamId.substring(1, streamId.length() - 1));
 
             try (InputStream content = response.getContent()) {
                 BufferedReader r = new BufferedReader(new InputStreamReader(content));
@@ -122,9 +101,45 @@ public class SchedulerConnection extends Thread {
                 }
 
             }
+        } catch (HttpResponseException e) {
+            throw new RuntimeException(String.format("Error subscribing to Mesos at %s: %d, %s", masterUri.toString(), e.getStatusCode(), e.getStatusMessage()), e);
         } catch (IOException e) {
-            // TODO handle this and carry on?
-            throw new RuntimeException(e);
+            // TODO thrown if master goes down
+            throw new RuntimeException(String.format("IOException while parsing Scheduler response stream"), e);
         }
+    }
+
+    private HttpRequest createSubscribeRequest() {
+        HttpRequest request;Subscribe.Builder subscribe = Subscribe.newBuilder()
+                .setFrameworkInfo(framework);
+
+        Call.Builder subCall = Call.newBuilder()
+                .setType(SUBSCRIBE)
+                .setSubscribe(subscribe);
+
+        if (frameworkId != null) {
+            subCall.setFrameworkId(frameworkId);
+        }
+
+
+        HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(
+                new HttpRequestInitializer() {
+                    @Override
+                    public void initialize(HttpRequest request) {
+                        request.setParser(new ProtoObjectParser());
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.setContentType("application/json");
+                        headers.setAccept("application/json");
+                        request.setHeaders(headers);
+                    }
+                });
+
+        try {
+            GenericUrl url = new GenericUrl(schedulerEndpoint(this.masterUri));
+            request = requestFactory.buildPostRequest(url, new ProtoHttpContent(subCall.build()));
+        } catch (IOException e) {
+            throw new RuntimeException("Error building Subscribe request", e);
+        }
+        return request;
     }
 }
