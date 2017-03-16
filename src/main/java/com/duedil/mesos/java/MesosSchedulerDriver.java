@@ -149,7 +149,7 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
         close();
     }
 
-    private String getVersion(URI master) {
+    public String getVersion(URI master) {
         if (master != null) {
             HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(
                     new HttpRequestInitializer() {
@@ -163,18 +163,26 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
             try {
                 HttpRequest request = requestFactory.buildGetRequest(url);
                 HttpResponse response = request.execute();
-                if (response.getStatusCode() < SC_OK || response.getStatusCode() >= SC_MULTIPLE_CHOICES) {
+                if (response.getStatusCode() != SC_OK) {
+                    LOG.error(String.format(
+                            "Unable to fetch version, response code %d, Message: %s",
+                            response.getStatusCode(),
+                            response.getStatusMessage()));
                     return null;
                 }
-
-                VersionInfo versionInfo = response.parseAs(VersionInfo.class);
-                return versionInfo.getVersion();
+                String versionJson = response.parseAsString();
+                JsonFormat.Parser parser = JsonFormat.parser();
+                VersionInfo.Builder versionInfo = VersionInfo.newBuilder();
+                parser.merge(versionJson, versionInfo);
+                return versionInfo.build().getVersion();
+            } catch (HttpResponseException e) {
+                // TODO handle this appropriately
+                LOG.error("Received bad response when fetching version", e);
             } catch(IOException e) {
-                // TODO log error
-                // TODO close connection
-                LOG.error("BLEARGH", e.toString());
+                throw new RuntimeException(e);
             }
         }
+        // TODO should throw exception here?
         return "";
     }
 
