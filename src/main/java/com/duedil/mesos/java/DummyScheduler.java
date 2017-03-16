@@ -16,6 +16,8 @@ import java.util.UUID;
  */
 public class DummyScheduler implements Scheduler {
 
+    private static final Logger LOG = LoggerFactory.getLogger(DummyScheduler.class);
+
     public static void main(String[] args) {
 
         DummyScheduler scheduler = new DummyScheduler();
@@ -29,8 +31,6 @@ public class DummyScheduler implements Scheduler {
         MesosSchedulerDriver d = new MesosSchedulerDriver(scheduler, fi, masterUri);
         d.run();
     }
-
-    private static final Logger LOG = LoggerFactory.getLogger(DummyScheduler.class);
 
     @Override
     public void registered(SchedulerDriver driver, Protos.FrameworkID frameworkId, Protos.MasterInfo masterInfo) {
