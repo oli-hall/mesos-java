@@ -95,7 +95,7 @@ public class DummyScheduler implements Scheduler {
                                 )
                                 .setData(ByteString.copyFrom(Base64.encodeBase64("Hello, I'm a testing task!".getBytes())))
                                 .build()
-                ) // TODO a command etc
+                )
                 .addResources(
                         Protos.Resource.newBuilder()
                                 .setName("cpus")
