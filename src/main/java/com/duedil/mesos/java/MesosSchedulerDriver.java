@@ -36,7 +36,6 @@ import org.apache.mesos.v1.Protos.TaskInfo;
 import org.apache.mesos.v1.Protos.TaskStatus;
 import org.apache.mesos.v1.Protos.VersionInfo;
 import org.apache.mesos.v1.scheduler.Protos.Call;
-import org.apache.mesos.v1.scheduler.Protos.Call.Subscribe;
 import org.apache.mesos.v1.scheduler.Protos.Call.Accept;
 import org.apache.mesos.v1.scheduler.Protos.Call.Acknowledge;
 import org.apache.mesos.v1.scheduler.Protos.Call.Decline;
@@ -52,16 +51,10 @@ import org.apache.mesos.v1.scheduler.Protos.Event.Update;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 
 import static com.duedil.mesos.java.Utils.schedulerEndpoint;
 import static com.duedil.mesos.java.Utils.versionEndpoint;
@@ -87,12 +80,14 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
 
     private final Scheduler scheduler;
     private final FrameworkInfo framework;
-    private final URI masterUri;
     private final boolean implicitAcknowledgements;
     private boolean failover;
+    private URI masterUri;
     // TODO wrap this into framework var? framework is immutable class
     private FrameworkID frameworkId;
     private String version;
+    private SchedulerConnection conn;
+    private String streamId = null;
 
     public MesosSchedulerDriver(Scheduler scheduler, FrameworkInfo framework, URI masterUri) {
         this(scheduler, framework, masterUri, false);
@@ -101,30 +96,50 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
     public MesosSchedulerDriver(Scheduler scheduler, FrameworkInfo framework, URI masterUri,
                                 boolean implicitAcknowledgements) {
         this.scheduler = checkNotNull(scheduler);
-        this.framework = checkNotNull(framework);
+        this.framework = addDefaultFrameworkValues(checkNotNull(framework));
         this.masterUri = checkNotNull(masterUri);
         this.implicitAcknowledgements = checkNotNull(implicitAcknowledgements);
         this.version = null;
         this.failover = false;
+        this.conn = null;
     }
 
     // TODO can this be connected but not have a framework ID? can have framework ID and not be connected
 
     // TODO behaviour from framework getter
 
+    // TODO return Status
     @Override
     public void start() {
-        // superclass start()
-        // set uri = master
-        // if uri starts with zk:// or zoo://
-            // set detector to MasterDetector (MASSIVE TODO), with uri equal to non-scheme suffix of URI
-            // start detector
-        // else
-            // if uri doesn't have a port suffix
-                // add :5050
-            // changeMaster(uri);
-        SchedulerConnection conn = new SchedulerConnection(framework, this, masterUri, frameworkId);
+        // TODO handle zk URIs
+        // TODO add standard port if URI lacks a port
+        // TODO can this be initialised in constructor?
+        conn = new SchedulerConnection(framework, this, masterUri, frameworkId);
+    }
+
+    // TODO abort? return Status
+
+    // TODO join? return Status
+    public void join() {
+
+    }
+
+    // TODO run? (how will semantics differ from calling start()?
+    public void run() {
+        start();
         conn.run();
+        join();
+    }
+
+
+    private FrameworkInfo addDefaultFrameworkValues(FrameworkInfo framework) {
+        FrameworkInfo.Builder frameworkInfo = framework.toBuilder();
+
+        if (!frameworkInfo.hasFailoverTimeout()) {
+            frameworkInfo.setFailoverTimeout(100.0);
+        }
+
+        return frameworkInfo.build();
     }
 
     public void stop() {
@@ -190,11 +205,6 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
         if (!failover) {
             tearDown();
         }
-    }
-
-    private void close() {
-        // TODO close connection
-        // is this persistent connection needed in the same manner?
     }
 
     private void tearDown() {
@@ -264,11 +274,7 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
                         response.parseAsString(),
                         body.toString()));
             }
-            try (InputStream s = response.getContent()) {
-                Scanner sc = new Scanner(s).useDelimiter("\\A");
-                String m = sc.hasNext() ? sc.next() : "";
-                System.out.println("Received response:" + m);
-            }
+            System.out.println("Received response:" + response.parseAsString());
         } catch (IOException e) {
             // TODO call close
             LOG.error("IOException: ABORT ABORT ABORT");
@@ -464,9 +470,8 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
         }
     }
 
-    // TODO what calls this?
+    // TODO what calls this? called when master changed, when connection lost, on shutdown
     private void onClose() {
-        close();
         scheduler.disconnected(this);
     }
 

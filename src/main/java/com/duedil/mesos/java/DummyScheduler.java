@@ -28,7 +28,7 @@ public class DummyScheduler implements Scheduler {
         URI masterUri = URI.create("http://192.168.33.50:5050");
 
         MesosSchedulerDriver d = new MesosSchedulerDriver(scheduler, fi, masterUri);
-        d.start();
+        d.run();
     }
 
     private static final Logger LOG = LoggerFactory.getLogger(DummyScheduler.class);
