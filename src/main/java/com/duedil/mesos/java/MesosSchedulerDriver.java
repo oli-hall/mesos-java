@@ -7,19 +7,14 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.protobuf.ProtoHttpContent;
-import com.google.api.client.json.Json;
-import com.google.api.client.json.JsonParser;
 import com.google.api.client.protobuf.ProtoObjectParser;
-import com.google.api.client.util.IOUtils;
 import com.google.protobuf.ByteString;
-
 import com.google.protobuf.util.JsonFormat;
-import com.google.protobuf.util.JsonFormat.Parser;
 
-import org.apache.mesos.v1.Protos;
 import org.apache.mesos.v1.Protos.AgentID;
 import org.apache.mesos.v1.Protos.ExecutorID;
 import org.apache.mesos.v1.Protos.Filters;
@@ -29,7 +24,6 @@ import org.apache.mesos.v1.Protos.MasterInfo;
 import org.apache.mesos.v1.Protos.Offer.Operation;
 import org.apache.mesos.v1.Protos.Offer.Operation.Launch;
 import org.apache.mesos.v1.Protos.OfferID;
-import org.apache.mesos.v1.Protos.URL;
 import org.apache.mesos.v1.Protos.Request;
 import org.apache.mesos.v1.Protos.TaskID;
 import org.apache.mesos.v1.Protos.TaskInfo;
@@ -158,10 +152,12 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
         // call stop on the Process superclass
     }
 
-    private void changeMaster(URI master) {
-        version = getVersion(master);
-        // super changeMaster(master)
-        close();
+    private void changeMaster(URI newMaster) {
+        // TODO why the version request here?
+        // TODO what is version used for?
+        checkNotNull(newMaster);
+        version = getVersion(newMaster);
+        this.masterUri = newMaster;
     }
 
     public String getVersion(URI master) {
@@ -460,13 +456,18 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
     private void onSubscribed(Subscribed subscribed) {
         boolean reregistered = this.frameworkId != null;
         frameworkId = subscribed.getFrameworkId();
-        // TODO keep master as URI throughout?
-        // if version is set, add version to master info
+        MasterInfo masterInfo = subscribed.getMasterInfo();
+
+        if (version != null) {
+            masterInfo = masterInfo.toBuilder()
+                    .setVersion(version)
+                    .build();
+        }
 
         if (reregistered) {
-            scheduler.reregistered(this, subscribed.getMasterInfo());
+            scheduler.reregistered(this, masterInfo);
         } else {
-            scheduler.registered(this, frameworkId, subscribed.getMasterInfo());
+            scheduler.registered(this, frameworkId, masterInfo);
         }
     }
 
