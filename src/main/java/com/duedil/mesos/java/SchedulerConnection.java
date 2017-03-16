@@ -11,10 +11,13 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.protobuf.ProtoHttpContent;
 import com.google.api.client.protobuf.ProtoObjectParser;
-
-import org.apache.mesos.v1.scheduler.Protos;
-import org.apache.mesos.v1.scheduler.Protos.Event;
 import com.google.protobuf.util.JsonFormat;
+
+import org.apache.mesos.v1.Protos.FrameworkID;
+import org.apache.mesos.v1.Protos.FrameworkInfo;
+import org.apache.mesos.v1.scheduler.Protos.Event;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,27 +25,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 
-import org.apache.mesos.v1.Protos.FrameworkInfo;
-import org.apache.mesos.v1.Protos.FrameworkID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static com.duedil.mesos.java.Utils.schedulerEndpoint;
+import static com.google.api.client.repackaged.com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_TEMPORARY_REDIRECT;
 import static org.apache.mesos.v1.scheduler.Protos.Call;
 import static org.apache.mesos.v1.scheduler.Protos.Call.Subscribe;
-
-import static com.google.api.client.repackaged.com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.mesos.v1.scheduler.Protos.Call.Type.SUBSCRIBE;
 
 public class SchedulerConnection extends Thread {
 
     private static final Logger LOG = LoggerFactory.getLogger(SchedulerConnection.class);
-    // TODO can this/should this be shared with the main driver?
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-    private static final int CONNECT_RETRY_INTERVAL_SECS = 5;
 
     private final FrameworkInfo framework;
     private final EventListener listener;
@@ -74,8 +69,7 @@ public class SchedulerConnection extends Thread {
                 HttpResponse response = request.execute();
 
                 if (response.getStatusCode() == SC_TEMPORARY_REDIRECT) {
-                    String location = response.getHeaders().get("Location").toString();
-                    masterUri = parseNewMaster(location);
+                    masterUri = parseNewMaster(response.getHeaders().getFirstHeaderStringValue("Location"));
                     listener.changeMaster(masterUri);
                     LOG.debug("Redirect received, updating master to " + masterUri.toString());
                     backOff();
@@ -88,8 +82,7 @@ public class SchedulerConnection extends Thread {
                 }
                 resetRetries();
 
-                String streamId = response.getHeaders().get("Mesos-Stream-Id").toString();
-                listener.setStreamId(streamId.substring(1, streamId.length() - 1));
+                listener.setStreamId(response.getHeaders().getFirstHeaderStringValue("Mesos-Stream-Id"));
                 try {
                     processResponseStream(response);
                 } catch (IOException e) {
@@ -108,7 +101,7 @@ public class SchedulerConnection extends Thread {
     }
 
     private URI parseNewMaster(String location) {
-        return URI.create(String.format("http:%s", location.substring(1, location.length() - 25)));
+        return URI.create(String.format("http:%s", location.substring(0, location.length() - 24)));
     }
 
     private void resetRetries() {
