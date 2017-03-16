@@ -115,7 +115,11 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
 
     // TODO join? return Status
     public void join() {
-
+        try {
+            conn.join();
+        } catch (InterruptedException e) {
+            LOG.error("Exception thrown waiting for connection join", e);
+        }
     }
 
     // TODO run? (how will semantics differ from calling start()?
@@ -149,7 +153,7 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
 
         // if there was a detector, stop it
 
-        // call stop on the Process superclass
+        shutDown();
     }
 
     private void changeMaster(URI newMaster) {
@@ -203,8 +207,12 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
         }
     }
 
+    private boolean connected() {
+        return streamId != null;
+    }
+
     private void tearDown() {
-//        if (connected()) {
+        if (connected()) {
             if (frameworkId != null) {
                 Call teardown = Call.newBuilder()
                         .setType(TEARDOWN)
@@ -213,7 +221,7 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
                 send(teardown);
                 // unset ID from framework var if set
             }
-//        }
+        }
     }
 
     private void onNewMasterDetectedMessage(ByteString data) {
@@ -270,7 +278,7 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
                         response.parseAsString(),
                         body.toString()));
             }
-            System.out.println("Received response:" + response.parseAsString());
+            LOG.debug("Received response:" + response.parseAsString());
         } catch (IOException e) {
             // TODO call close
             LOG.error("IOException: ABORT ABORT ABORT");

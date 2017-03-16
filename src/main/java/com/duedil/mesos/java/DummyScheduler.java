@@ -6,12 +6,10 @@ import com.google.protobuf.ByteString;
 import org.apache.mesos.v1.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
 
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
-import java.util.logging.LogManager;
 
 /**
  * Test scheduler to verify basic Scheduler behaviours
@@ -19,6 +17,7 @@ import java.util.logging.LogManager;
 public class DummyScheduler implements Scheduler {
 
     public static void main(String[] args) {
+
         DummyScheduler scheduler = new DummyScheduler();
 
         Protos.FrameworkInfo fi = Protos.FrameworkInfo.newBuilder()
@@ -72,7 +71,6 @@ public class DummyScheduler implements Scheduler {
             }
 
             LOG.debug(String.format("Received offer for CPUs: %f, Mem: %f, Role: %s", offerCpu, offerMem, offerRole));
-            System.out.println(String.format("Received offer for CPUs: %f, Mem: %f, Role: %s", offerCpu, offerMem, offerRole));
         }
 
         Protos.TaskID taskId = Protos.TaskID.newBuilder()
@@ -119,7 +117,6 @@ public class DummyScheduler implements Scheduler {
         tasks.add(taskInfo);
 
 
-        System.out.println(String.format("Launching tasks %s for offer IDs %s", tasks.toString(), offerIds.toString()));
         LOG.debug(String.format("Launching tasks %s for offer IDs %s", tasks.toString(), offerIds.toString()));
         driver.launchTasks(offerIds, tasks, null);
     }
