@@ -77,7 +77,6 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
     private final boolean implicitAcknowledgements;
     private boolean failover;
     private URI masterUri;
-    // TODO wrap this into framework var? framework is immutable class
     private FrameworkID frameworkId;
     private String version;
     private SchedulerConnection conn;
@@ -98,11 +97,6 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
         this.conn = null;
     }
 
-    // TODO can this be connected but not have a framework ID? can have framework ID and not be connected
-
-    // TODO behaviour from framework getter
-
-    // TODO return Status
     @Override
     public void start() {
         // TODO handle zk URIs
@@ -111,9 +105,8 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
         conn = new SchedulerConnection(framework, this, masterUri, frameworkId);
     }
 
-    // TODO abort? return Status
+    // TODO abort?
 
-    // TODO join? return Status
     public void join() {
         try {
             conn.join();
@@ -122,7 +115,6 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
         }
     }
 
-    // TODO run? (how will semantics differ from calling start()?
     public void run() {
         start();
         conn.run();
@@ -147,7 +139,6 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
     @Override
     public void stop(boolean failover) {
         // lock
-            // assign failover to class var
             this.failover = failover;
             // grab detector, set class level detector to null
 
@@ -422,7 +413,6 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
 
     @Override
     public void sendFrameworkMessage(ExecutorID executorId, AgentID agentId, ByteString data) {
-        // TODO replace frameworkID validity checks with isConnected() method or similar?
         checkNotNull(frameworkId);
         checkNotNull(executorId);
         checkNotNull(agentId);
