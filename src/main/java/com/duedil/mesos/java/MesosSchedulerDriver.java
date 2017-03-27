@@ -211,7 +211,8 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
                         .setFrameworkId(frameworkId)
                         .build();
                 send(teardown);
-                // unset ID from framework var if set
+                // :(
+                frameworkId = null;
             }
         }
     }
@@ -229,13 +230,13 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
         }
     }
 
+    private void onNoMasterDetectedMessage() {
+        changeMaster(null);
+    }
+
     @Override
     public void setStreamId(String streamId) {
         this.streamId = streamId;
-    }
-
-    private void onNoMasterDetectedMessage() {
-        changeMaster(null);
     }
 
     private void send(Call body) {
@@ -270,7 +271,6 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
                         response.parseAsString(),
                         body.toString()));
             }
-            LOG.debug("Received response:" + response.parseAsString());
         } catch (IOException e) {
             throw new RuntimeException("IOException: ABORT ABORT ABORT", e);
         }
