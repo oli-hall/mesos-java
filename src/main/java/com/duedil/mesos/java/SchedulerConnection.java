@@ -136,6 +136,10 @@ public class SchedulerConnection extends Thread {
                 String lengthBytes;
                 do {
                     lengthBytes = r.readLine();
+                    if (lengthBytes == null) {
+                        LOG.info("Stream terminated from remote end.");
+                        return;
+                    }
                 } while (lengthBytes.length() < 1);
 
                 int messageLength = Integer.valueOf(lengthBytes);
