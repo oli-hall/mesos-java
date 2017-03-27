@@ -45,6 +45,7 @@ public class SchedulerConnection extends Thread {
     private final int maxRetries;
     private int retries = 0;
     private URI masterUri;
+    private boolean shutdown = false;
 
     public SchedulerConnection(FrameworkInfo framework, EventListener listener, URI masterUri,
                                FrameworkID frameworkId) {
@@ -85,6 +86,9 @@ public class SchedulerConnection extends Thread {
                 listener.setStreamId(response.getHeaders().getFirstHeaderStringValue("Mesos-Stream-Id"));
                 try {
                     processResponseStream(response);
+                    if (shutdown) {
+                        break;
+                    }
                 } catch (IOException e) {
                     LOG.warn(String.format("Lost connection to master: %s. Retrying...", e.getMessage()));
                     backOff();
@@ -98,6 +102,10 @@ public class SchedulerConnection extends Thread {
                 backOff();
             }
         }
+    }
+
+    public void shutdown() {
+        shutdown = true;
     }
 
     private URI parseNewMaster(String location) {

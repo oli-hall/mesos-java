@@ -211,6 +211,7 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
                         .setFrameworkId(frameworkId)
                         .build();
                 send(teardown);
+                conn.shutdown();
                 // :(
                 frameworkId = null;
             }
