@@ -145,6 +145,7 @@ public class DummyScheduler implements Scheduler {
             default:
                 LOG.info("Task update: " + status.getState().toString());
         }
+        driver.stop(false);
     }
 
     @Override
