@@ -249,21 +249,21 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
 
     private void send(Call body) {
         // TODO lock?
-        // TODO if not connected, raise exception
         checkNotNull(body);
+        if (!connected()) {
+            throw new RuntimeException("Must subscribe Framework before trying to call methods");
+        }
 
         HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(
                 new HttpRequestInitializer() {
                     @Override
                     public void initialize(HttpRequest request) {
                         request.setParser(new ProtoObjectParser());
-                        if (streamId != null) {
-                            HttpHeaders headers = new HttpHeaders();
-                            headers.set("Mesos-Stream-Id", streamId);
-                            headers.setContentType("application/json");
-                            headers.setAccept("application/json");
-                            request.setHeaders(headers);
-                        }
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.set("Mesos-Stream-Id", streamId);
+                        headers.setContentType("application/json");
+                        headers.setAccept("application/json");
+                        request.setHeaders(headers);
                     }
                 });
 
@@ -281,13 +281,8 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
             }
             LOG.debug("Received response:" + response.parseAsString());
         } catch (IOException e) {
-            // TODO call close
-            LOG.error("IOException: ABORT ABORT ABORT");
-            throw new RuntimeException(e);
+            throw new RuntimeException("IOException: ABORT ABORT ABORT", e);
         }
-        // TODO read response
-        // what type is response? Nothing uses the response anyhow.
-        // Convert back to datastructure/JSON, return it?
     }
 
     @Override
@@ -375,9 +370,6 @@ public class MesosSchedulerDriver implements SchedulerDriver, EventListener {
 
     @Override
     public void reviveOffers() {
-        // if not connected
-        // return
-
         checkNotNull(frameworkId);
 
         Call revive = Call.newBuilder()
