@@ -11,10 +11,10 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.protobuf.ProtoHttpContent;
 import com.google.api.client.protobuf.ProtoObjectParser;
 import com.google.protobuf.util.JsonFormat;
-import org.apache.mesos.Protos.ExecutorInfo;
-import org.apache.mesos.Protos.FrameworkID;
-import org.apache.mesos.Protos.TaskInfo;
-import org.apache.mesos.Protos.FrameworkInfo;
+import org.apache.mesos.v1.Protos.ExecutorInfo;
+import org.apache.mesos.v1.Protos.FrameworkID;
+import org.apache.mesos.v1.Protos.TaskInfo;
+import org.apache.mesos.v1.Protos.FrameworkInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,10 +29,10 @@ import static com.duedil.mesos.java.Utils.executorEndpoint;
 import static com.google.api.client.util.Preconditions.checkNotNull;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
-import static org.apache.mesos.executor.Protos.Call;
-import static org.apache.mesos.executor.Protos.Call.Subscribe;
-import static org.apache.mesos.executor.Protos.Call.Type.SUBSCRIBE;
-import static org.apache.mesos.executor.Protos.Call.Update;
+import static org.apache.mesos.v1.executor.Protos.Call;
+import static org.apache.mesos.v1.executor.Protos.Call.Subscribe;
+import static org.apache.mesos.v1.executor.Protos.Call.Type.SUBSCRIBE;
+import static org.apache.mesos.v1.executor.Protos.Call.Update;
 import static org.apache.mesos.v1.executor.Protos.Event;
 
 

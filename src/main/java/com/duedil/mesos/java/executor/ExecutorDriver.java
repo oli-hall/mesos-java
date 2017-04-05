@@ -1,4 +1,4 @@
-package com.duedil.mesos.java;
+package com.duedil.mesos.java.executor;
 
 import org.apache.mesos.v1.Protos.Status;
 

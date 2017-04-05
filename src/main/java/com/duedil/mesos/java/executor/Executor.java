@@ -1,8 +1,8 @@
-package com.duedil.mesos.java;
+package com.duedil.mesos.java.executor;
 
+import org.apache.mesos.v1.Protos.AgentInfo;
 import org.apache.mesos.v1.Protos.ExecutorInfo;
 import org.apache.mesos.v1.Protos.FrameworkInfo;
-import org.apache.mesos.v1.Protos.AgentInfo;
 import org.apache.mesos.v1.Protos.Task;
 import org.apache.mesos.v1.Protos.TaskID;
 import org.apache.mesos.v1.executor.Protos.Event.Message;
