@@ -37,7 +37,7 @@ import static org.apache.mesos.v1.executor.Protos.Event;
 
 
 
-public class ExecutorConnection implements Runnable {
+public class ExecutorConnection extends Thread {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorConnection.class);
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
