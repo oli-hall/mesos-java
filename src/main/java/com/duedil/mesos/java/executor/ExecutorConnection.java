@@ -93,7 +93,6 @@ public class ExecutorConnection extends Thread {
             } catch (IOException e) {
                 LOG.error("Error during SUBSCRIBE: {}", e.getMessage());
                 backoff();
-                continue;
             }
         }
     }
