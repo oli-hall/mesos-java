@@ -14,7 +14,7 @@ import com.google.protobuf.util.JsonFormat;
 import org.apache.mesos.Protos.ExecutorInfo;
 import org.apache.mesos.Protos.FrameworkID;
 import org.apache.mesos.Protos.TaskInfo;
-import org.apache.mesos.v1.Protos.FrameworkInfo;
+import org.apache.mesos.Protos.FrameworkInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
