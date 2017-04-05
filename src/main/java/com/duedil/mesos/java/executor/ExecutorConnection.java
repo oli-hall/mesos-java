@@ -189,4 +189,32 @@ public class ExecutorConnection implements Runnable {
         retries = 0;
     }
 
+    public static Set<TaskInfo> getUnacknowledgedTaks() {
+        return UNACKNOWLEDGED_TAKS;
+    }
+
+    public static Set<Update> getUnacknowledgedUpdates() {
+        return UNACKNOWLEDGED_UPDATES;
+    }
+
+    public ActionableListener getListener() {
+        return listener;
+    }
+
+    public FrameworkInfo getFramework() {
+        return framework;
+    }
+
+    public FrameworkID getFrameworkId() {
+        return frameworkId;
+    }
+
+    public ExecutorInfo getExecutorInfo() {
+        return executorInfo;
+    }
+
+    public int getMaxRetries() {
+        return maxRetries;
+    }
+
 }
