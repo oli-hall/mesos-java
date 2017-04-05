@@ -87,7 +87,7 @@ public class ExecutorConnection extends Thread {
                     processResponseStream(response);
                 }
                 catch (IOException e) {
-                    LOG.warn(String.format("Lost connection to agent: {}. Retrying...", e.getMessage()));
+                    LOG.warn("Lost connection to agent: {}. Retrying...", e.getMessage());
                     backoff();
                 }
             } catch (IOException e) {
