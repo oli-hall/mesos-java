@@ -1,20 +1,14 @@
 package com.duedil.mesos.java.executor;
 
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpHeaders;
+import com.duedil.mesos.java.executor.api.Requestable;
+import com.duedil.mesos.java.executor.api.SubscribeRequest;
 import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.http.protobuf.ProtoHttpContent;
-import com.google.api.client.protobuf.ProtoObjectParser;
 import com.google.protobuf.util.JsonFormat;
 import org.apache.mesos.v1.Protos.ExecutorInfo;
 import org.apache.mesos.v1.Protos.FrameworkID;
-import org.apache.mesos.v1.Protos.TaskInfo;
 import org.apache.mesos.v1.Protos.FrameworkInfo;
+import org.apache.mesos.v1.Protos.TaskInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,13 +19,10 @@ import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.duedil.mesos.java.Utils.executorEndpoint;
 import static com.google.api.client.util.Preconditions.checkNotNull;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
-import static org.apache.mesos.v1.executor.Protos.Call;
 import static org.apache.mesos.v1.executor.Protos.Call.Subscribe;
-import static org.apache.mesos.v1.executor.Protos.Call.Type.SUBSCRIBE;
 import static org.apache.mesos.v1.executor.Protos.Call.Update;
 import static org.apache.mesos.v1.executor.Protos.Event;
 
@@ -40,7 +31,6 @@ import static org.apache.mesos.v1.executor.Protos.Event;
 public class ExecutorConnection extends Thread {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorConnection.class);
-    private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
     private static final Set<TaskInfo> UNACKNOWLEDGED_TASKS = new HashSet<>();
     private static final Set<Update> UNACKNOWLEDGED_UPDATES = new HashSet<>();
@@ -68,7 +58,12 @@ public class ExecutorConnection extends Thread {
     @Override
     public void run() {
         while (true) {
-            HttpRequest request = createSubscribeRequest();
+            Subscribe subscription = Subscribe.newBuilder()
+                    .addAllUnacknowledgedTasks(UNACKNOWLEDGED_TASKS)
+                    .addAllUnacknowledgedUpdates(UNACKNOWLEDGED_UPDATES)
+                    .build();
+            Requestable req = new SubscribeRequest(subscription, framework, executorInfo);
+            HttpRequest request = req.createRequest();
 
             try {
                 HttpResponse response = request.execute();
@@ -132,44 +127,6 @@ public class ExecutorConnection extends Thread {
                 listener.onEvent(event);
             }
         }
-    }
-
-    private HttpRequest createSubscribeRequest() {
-        HttpRequest request;
-        Subscribe subscribe = Subscribe.newBuilder()
-                .addAllUnacknowledgedTasks(UNACKNOWLEDGED_TAKS)
-                .addAllUnacknowledgedUpdates(UNACKNOWLEDGED_UPDATES)
-                .build();
-
-        Call.Builder call = Call.newBuilder()
-                .setType(SUBSCRIBE)
-                .setSubscribe(subscribe)
-                .setFrameworkId(frameworkId)
-                .setExecutorId(executorInfo.getExecutorId());
-
-        HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
-            @Override
-            public void initialize(HttpRequest request) throws IOException {
-                request.setParser(new ProtoObjectParser());
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType("application/json");
-                headers.setAccept("application/json");
-                request.setHeaders(headers);
-            }
-        });
-
-        // TODO: figure out the port dynamically
-//        executorInfo.getDiscovery().getPorts().getPorts(0);
-        GenericUrl url = new GenericUrl(executorEndpoint());
-        try {
-            request = requestFactory.buildPostRequest(url, new ProtoHttpContent(call.build()));
-        } catch (IOException e) {
-            LOG.error("Failed to build Subscribe request: {}", e.getMessage());
-            throw new RuntimeException(e);
-        }
-
-        request.setThrowExceptionOnExecuteError(false);
-        return request;
     }
 
     private void backoff() {
