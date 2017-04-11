@@ -37,9 +37,6 @@ public class ExecutorConnectionTest {
         ActionableListener eventListener = mock(ActionableListener.class);
 
         ExecutorConnection connection = new ExecutorConnection(framework, frameworkId, executorInfo, eventListener);
-        assertEquals(connection.getFramework(), framework);
-        assertEquals(connection.getListener(), eventListener);
-        assertEquals(connection.getFrameworkId(), frameworkId);
         assertEquals(connection.getMaxRetries(), DEFAULT_MAX_RETRIES);
     }
 
