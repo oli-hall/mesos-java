@@ -42,7 +42,7 @@ public class ExecutorConnection extends Thread {
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorConnection.class);
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
-    private static final Set<TaskInfo> UNACKNOWLEDGED_TAKS = new HashSet<>();
+    private static final Set<TaskInfo> UNACKNOWLEDGED_TASKS = new HashSet<>();
     private static final Set<Update> UNACKNOWLEDGED_UPDATES = new HashSet<>();
 
     private final ActionableListener listener;
@@ -188,8 +188,8 @@ public class ExecutorConnection extends Thread {
         retries = 0;
     }
 
-    public static Set<TaskInfo> getUnacknowledgedTaks() {
-        return UNACKNOWLEDGED_TAKS;
+    public static Set<TaskInfo> getUnacknowledgedTasks() {
+        return UNACKNOWLEDGED_TASKS;
     }
 
     public static Set<Update> getUnacknowledgedUpdates() {
