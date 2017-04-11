@@ -3,6 +3,7 @@ package com.duedil.mesos.java.executor;
 import org.apache.mesos.v1.Protos.ExecutorInfo;
 import org.apache.mesos.v1.Protos.FrameworkID;
 import org.apache.mesos.v1.Protos.FrameworkInfo;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URISyntaxException;
@@ -13,12 +14,21 @@ import static org.mockito.Mockito.mock;
 
 public class ExecutorConnectionTest {
 
+    private FrameworkInfo framework;
+    private FrameworkID frameworkId;
+    private ExecutorInfo executorInfo;
+    private ActionableListener eventListener;
+
+    @Before
+    public void setUp() {
+        framework = FrameworkInfo.newBuilder().getDefaultInstanceForType();
+        frameworkId = FrameworkID.newBuilder().getDefaultInstanceForType();
+        executorInfo = ExecutorInfo.newBuilder().getDefaultInstanceForType();
+        eventListener = mock(ActionableListener.class);
+    }
+
     @Test
     public void testRetainsValues() throws URISyntaxException {
-        FrameworkInfo framework = FrameworkInfo.newBuilder().getDefaultInstanceForType();
-        FrameworkID frameworkId = FrameworkID.newBuilder().getDefaultInstanceForType();
-        ExecutorInfo executorInfo = ExecutorInfo.newBuilder().getDefaultInstanceForType();
-        ActionableListener eventListener = mock(ActionableListener.class);
         int maxRetries = 3;
 
         ExecutorConnection connection = new ExecutorConnection(framework, frameworkId, executorInfo, eventListener, maxRetries);
@@ -31,11 +41,6 @@ public class ExecutorConnectionTest {
 
     @Test
     public void testUsesDefaultMaxRetries() throws URISyntaxException {
-        FrameworkInfo framework = FrameworkInfo.newBuilder().getDefaultInstanceForType();
-        FrameworkID frameworkId = FrameworkID.newBuilder().getDefaultInstanceForType();
-        ExecutorInfo executorInfo = ExecutorInfo.newBuilder().getDefaultInstanceForType();
-        ActionableListener eventListener = mock(ActionableListener.class);
-
         ExecutorConnection connection = new ExecutorConnection(framework, frameworkId, executorInfo, eventListener);
         assertEquals(connection.getMaxRetries(), DEFAULT_MAX_RETRIES);
     }
