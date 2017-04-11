@@ -45,4 +45,11 @@ public class ExecutorConnectionTest {
         assertEquals(connection.getMaxRetries(), DEFAULT_MAX_RETRIES);
     }
 
+    @Test
+    public void testNewExecutorConnectionHoldsNoTasksOrUpdates(){
+        ExecutorConnection connection = new ExecutorConnection(framework, frameworkId, executorInfo, eventListener);
+        assertEquals(connection.getUnacknowledgedUpdates().size(), 0);
+        assertEquals(connection.getUnacknowledgedTasks().size(), 0);
+    }
+
 }
