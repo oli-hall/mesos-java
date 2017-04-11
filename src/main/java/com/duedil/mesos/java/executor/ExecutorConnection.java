@@ -50,7 +50,7 @@ public class ExecutorConnection extends Thread {
     private final FrameworkID frameworkId;
     private final ExecutorInfo executorInfo;
     private final int maxRetries;
-    private static final int DEFAULT_MAX_RETRIES = 5;
+    static final int DEFAULT_MAX_RETRIES = 5;
     private int retries = 0;
 
     public ExecutorConnection(FrameworkInfo framework, FrameworkID frameworkId, ExecutorInfo executorInfo, ActionableListener listener) {
