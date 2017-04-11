@@ -25,6 +25,7 @@ public class ExecutorConnectionTest {
         assertEquals(connection.getFramework(), framework);
         assertEquals(connection.getListener(), eventListener);
         assertEquals(connection.getFrameworkId(), frameworkId);
+        assertEquals(connection.getExecutorInfo(), executorInfo);
         assertEquals(connection.getMaxRetries(), maxRetries);
     }
 
