@@ -6,8 +6,10 @@ import org.apache.mesos.v1.Protos.ExecutorID;
 import org.apache.mesos.v1.Protos.ExecutorInfo;
 import org.apache.mesos.v1.Protos.FrameworkID;
 import org.apache.mesos.v1.Protos.FrameworkInfo;
+import org.apache.mesos.v1.Protos.TaskID;
+import org.apache.mesos.v1.Protos.TaskState;
+import org.apache.mesos.v1.Protos.TaskStatus;
 import org.apache.mesos.v1.executor.Protos.Call;
-import org.apache.mesos.v1.executor.Protos.Call.Subscribe;
 import org.apache.mesos.v1.executor.Protos.Call.Update;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +46,12 @@ public class UpdateRequestTest {
         ExecutorID executorId = ExecutorID.newBuilder().setValue("3x3cut0r-1d").build();
         when(executor.getExecutorId()).thenReturn(executorId);
 
-        // TODO: Update
+        update = Update.newBuilder()
+                .setStatus(TaskStatus.newBuilder()
+                        .setTaskId(TaskID.newBuilder().setValue("t4sk-1d").build())
+                        .setState(TaskState.TASK_FINISHED)
+                        .build())
+                .build();
     }
 
     @Test
@@ -52,53 +59,52 @@ public class UpdateRequestTest {
         UpdateRequest call = new UpdateRequest(update, framework, executor);
         assertThat(call, is(not(nullValue())));
 
-        assertThat(call.getSubscription(), is(equalTo(subscription)));
+        assertThat(call.getUpdate(), is(equalTo(update)));
         assertThat(call.getFramework(), is(equalTo(framework)));
         assertThat(call.getExecutor(), is(equalTo(executor)));
     }
 
     @SuppressWarnings("unused")
     @Test(expected = NullPointerException.class)
-    public void testConstructorRequiresNonNullSubscription() {
-        SubscribeRequest call = new SubscribeRequest(null, framework, executor);
+    public void testConstructorRequiresNonNullUpdate() {
+        UpdateRequest call = new UpdateRequest(null, framework, executor);
     }
 
     @SuppressWarnings("unused")
     @Test(expected = NullPointerException.class)
     public void testConstructorRequiresNonNullFrameworkInfo() {
-//        SubscribeRequest call = new SubscribeRequest(subscription, null, executor);
+        UpdateRequest call = new UpdateRequest(update, null, executor);
     }
 
     @SuppressWarnings("unused")
     @Test(expected = NullPointerException.class)
     public void testConstructorRequiresNonNullExecutorInfo() {
-//        SubscribeRequest call = new SubscribeRequest(subscription, framework, null);
+        UpdateRequest call = new UpdateRequest(update, framework, null);
     }
 
     @Test
     public void testRequestHasCorrectHeaders() {
-//        SubscribeRequest call = new SubscribeRequest(subscription, framework, executor);
-//        HttpRequest req = call.createRequest();
-//        HttpHeaders headers = req.getHeaders();
-//        assertThat(headers.get("Content-type").toString(), is(equalTo("[application/json]")));
-//        assertThat(headers.get("Accept").toString(), is(equalTo("[application/json]")));
-//        assertThat(headers.get("Accept-encoding").toString(), is(equalTo("[chunked]")));
+        UpdateRequest call = new UpdateRequest(update, framework, executor);
+        HttpRequest req = call.createRequest();
+        HttpHeaders headers = req.getHeaders();
+        assertThat(headers.get("Content-type").toString(), is(equalTo("[application/json]")));
+        assertThat(headers.get("Accept").toString(), is(equalTo("[application/json]")));
     }
 
     @Test
     public void testRequestHasCorrectContent() throws IOException {
-//        SubscribeRequest call = new SubscribeRequest(subscription, framework, executor);
-//        HttpRequest req = call.createRequest();
-//
-//        ByteArrayOutputStream out = new ByteArrayOutputStream();
-//        req.getContent().writeTo(out);
-//        byte[] contentBytes = out.toByteArray();
-//        Call contentCall = Call.parseFrom(contentBytes);
-//
-//        assertThat(contentCall.getFrameworkId(), is(equalTo(framework.getId())));
-//        assertThat(contentCall.getExecutorId(), is(equalTo(executor.getExecutorId())));
-//        Subscribe payload = contentCall.getSubscribe();
-//        assertThat(payload, is(equalTo(subscription)));
+        UpdateRequest call = new UpdateRequest(update, framework, executor);
+        HttpRequest req = call.createRequest();
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        req.getContent().writeTo(out);
+        byte[] contentBytes = out.toByteArray();
+        Call contentCall = Call.parseFrom(contentBytes);
+
+        assertThat(contentCall.getFrameworkId(), is(equalTo(framework.getId())));
+        assertThat(contentCall.getExecutorId(), is(equalTo(executor.getExecutorId())));
+        Update payload = contentCall.getUpdate();
+        assertThat(payload, is(equalTo(update)));
     }
 
 }
