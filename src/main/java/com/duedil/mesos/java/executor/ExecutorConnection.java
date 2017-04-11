@@ -145,11 +145,11 @@ public class ExecutorConnection extends Thread {
         retries = 0;
     }
 
-    public static Set<TaskInfo> getUnacknowledgedTasks() {
+    public Set<TaskInfo> getUnacknowledgedTasks() {
         return UNACKNOWLEDGED_TASKS;
     }
 
-    public static Set<Update> getUnacknowledgedUpdates() {
+    public Set<Update> getUnacknowledgedUpdates() {
         return UNACKNOWLEDGED_UPDATES;
     }
 
