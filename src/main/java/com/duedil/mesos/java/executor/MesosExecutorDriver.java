@@ -143,6 +143,10 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
     public void onEvent(Event event) {
         LOG.debug("Event: {}", event.getMessage());
         switch (event.getType()) {
+            case SUBSCRIBED:
+                break;
+            case LAUNCH:
+                break;
             case LAUNCH_GROUP:
                 break;
             case KILL:
@@ -151,9 +155,9 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
                 break;
             case MESSAGE:
                 break;
-            case ERROR:
-                break;
             case SHUTDOWN:
+                break;
+            case ERROR:
                 break;
             case UNKNOWN:
                 LOG.error("Unknown event: {}", event.toString());
