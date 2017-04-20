@@ -25,7 +25,7 @@ public class MessageRequest extends BaseRequest {
     private final FrameworkID frameworkId;
     private final ExecutorID executorId;
 
-    MessageRequest(Message message, FrameworkID frameworkId, ExecutorID executorId, URI url) {
+    public MessageRequest(Message message, FrameworkID frameworkId, ExecutorID executorId, URI url) {
         super(url);
         this.message = checkNotNull(message);
         this.frameworkId = checkNotNull(frameworkId);
