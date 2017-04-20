@@ -150,6 +150,7 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
                 onLaunch(event);
                 break;
             case LAUNCH_GROUP:
+                // TODO: This is marked as *experimental* in the API doc, what do?
                 break;
             case KILL:
                 break;
