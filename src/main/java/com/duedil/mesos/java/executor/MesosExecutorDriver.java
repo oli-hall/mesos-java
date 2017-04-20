@@ -163,6 +163,7 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
                 onMessage(event);
                 break;
             case SHUTDOWN:
+                onShutdown(event);
                 break;
             case ERROR:
                 onError(event);
@@ -182,6 +183,10 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
     }
 
     private void onShutdown(final Event event) {
+        LOG.debug("Sending shutdown() request");
+        executor.shutdown(this);
+    }
+
     private void onMessage(final Event event) {
         Event.Message message = event.getMessage();
         byte[] bytes = Base64.decodeBase64(message.getData().toByteArray());
