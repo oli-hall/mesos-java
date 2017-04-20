@@ -16,6 +16,7 @@ import org.apache.mesos.v1.Protos.TaskStatus;
 import org.apache.mesos.v1.executor.Protos.Call.Message;
 import org.apache.mesos.v1.executor.Protos.Call.Update;
 import org.apache.mesos.v1.executor.Protos.Event;
+import org.apache.mesos.v1.executor.Protos.Event.Error;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -164,6 +165,7 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
             case SHUTDOWN:
                 break;
             case ERROR:
+                onError(event);
                 break;
             case UNKNOWN:
                 LOG.error("Unknown event: {}", event.toString());
@@ -173,6 +175,13 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
         }
     }
 
+    private void onError(final Event event) {
+        Error error = event.getError();
+        LOG.error("Agent reported error '{}'", error.getMessage());
+        // TODO: the recommendation is to abort and retry subscription
+    }
+
+    private void onShutdown(final Event event) {
     private void onMessage(final Event event) {
         Event.Message message = event.getMessage();
         byte[] bytes = Base64.decodeBase64(message.getData().toByteArray());
