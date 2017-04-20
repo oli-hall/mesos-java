@@ -153,6 +153,7 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
                 // TODO: This is marked as *experimental* in the API doc, what do?
                 break;
             case KILL:
+                onKill(event);
                 break;
             case ACKNOWLEDGED:
                 onAcknowledged(event);
@@ -169,6 +170,12 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
             default:
                 LOG.info("NOP event: {}", event.toString());
         }
+    }
+
+    private void onKill(final Event event) {
+        TaskID taskId = event.getKill().getTaskId();
+        LOG.debug("Sending killTask() request for task {}", taskId.toString());
+        executor.killTask(this, taskId);
     }
 
     private void onLaunch(final Event event) {
