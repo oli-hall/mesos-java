@@ -9,12 +9,13 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.protobuf.ProtoObjectParser;
 
 import java.io.IOException;
+import java.net.URI;
 
-import static com.duedil.mesos.java.Utils.executorEndpoint;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-public abstract class BaseRequest implements Requestable {
+abstract class BaseRequest implements Requestable {
 
-    protected static final HttpRequestFactory REQUEST_FACTORY = new NetHttpTransport()
+    static final HttpRequestFactory REQUEST_FACTORY = new NetHttpTransport()
             .createRequestFactory(new HttpRequestInitializer() {
                 @Override
                 public void initialize(HttpRequest request) throws IOException {
@@ -24,6 +25,18 @@ public abstract class BaseRequest implements Requestable {
                     headers.setAccept(CONTENT_TYPE);
                     request.setHeaders(headers);
                 }});
-    protected static final GenericUrl BASE_URL = new GenericUrl(executorEndpoint());
-    protected static final String CONTENT_TYPE = "application/json";
+
+    final GenericUrl baseUrl;
+
+    BaseRequest(URI baseUrl) {
+        this.baseUrl = new GenericUrl(checkNotNull(baseUrl));
+    }
+
+    @Override
+    public GenericUrl getBaseUrl() {
+        return baseUrl;
+    }
+
+    private static final String CONTENT_TYPE = "application/json";
+
 }
