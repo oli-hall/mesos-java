@@ -167,7 +167,10 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
         }
     }
 
-    private void backoff() {}
+    private void onAcknowledged(final Event event) {
+    private void backoff() {
+        // TODO - placeholder
+    }
 
     Executor getExecutor() {
         return executor;
