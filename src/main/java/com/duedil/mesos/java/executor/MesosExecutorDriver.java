@@ -147,6 +147,7 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
                 onSubscribed(event);
                 break;
             case LAUNCH:
+                onLaunch(event);
                 break;
             case LAUNCH_GROUP:
                 break;
@@ -167,6 +168,13 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
             default:
                 LOG.info("NOP event: {}", event.toString());
         }
+    }
+
+    private void onLaunch(final Event event) {
+        TaskInfo task = event.getLaunch().getTask();
+        unacknowledgedTasks.put(task.getTaskId(), task);
+        LOG.debug("Sending launchTask() request for task {}", task.toString());
+        executor.launchTask(this, task);
     }
 
     private void onSubscribed(final Event event) {
