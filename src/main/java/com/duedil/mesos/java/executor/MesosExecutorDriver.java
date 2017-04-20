@@ -1,8 +1,10 @@
 package com.duedil.mesos.java.executor;
 
+import com.duedil.mesos.java.executor.api.MessageRequest;
 import com.duedil.mesos.java.executor.api.Requestable;
 import com.duedil.mesos.java.executor.api.UpdateRequest;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.util.Base64;
 import com.google.protobuf.ByteString;
 import org.apache.mesos.v1.Protos.ExecutorID;
 import org.apache.mesos.v1.Protos.FrameworkID;
@@ -11,6 +13,7 @@ import org.apache.mesos.v1.Protos.Status;
 import org.apache.mesos.v1.Protos.TaskID;
 import org.apache.mesos.v1.Protos.TaskInfo;
 import org.apache.mesos.v1.Protos.TaskStatus;
+import org.apache.mesos.v1.executor.Protos.Call.Message;
 import org.apache.mesos.v1.executor.Protos.Call.Update;
 import org.apache.mesos.v1.executor.Protos.Event;
 import org.slf4j.Logger;
@@ -116,7 +119,24 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
 
     @Override
     public Status sendFrameworkMessage(byte[] data) {
-        return Status.DRIVER_ABORTED;
+        // the data in the message should be base64-encoded, according to the API spec
+        byte[] encodedData = Base64.encodeBase64(checkNotNull(data));
+        ByteString payload = ByteString.copyFrom(encodedData);
+        Message message = Message.newBuilder().setData(payload).build();
+
+        Requestable request = new MessageRequest(message, frameworkId, executorId, agentEndpoint);
+        try {
+            HttpResponse response = request.createRequest().execute();
+            int statusCode = response.getStatusCode();
+            if (statusCode != SC_ACCEPTED) {
+                LOG.error("Failed to send message, got status code {}", statusCode);
+            }
+        } catch (IOException e) {
+            LOG.error("Error while sending message: {}", e.getMessage());
+            backoff();
+        }
+
+        return Status.DRIVER_RUNNING;
     }
 
     @Override
