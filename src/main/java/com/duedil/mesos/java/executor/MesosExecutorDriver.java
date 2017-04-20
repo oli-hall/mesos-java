@@ -24,6 +24,7 @@ import java.util.Map;
 import static com.duedil.mesos.java.Utils.executorEndpoint;
 import static com.duedil.mesos.java.Utils.getEnv;
 import static com.google.api.client.util.Preconditions.checkNotNull;
+import static org.apache.http.HttpStatus.SC_ACCEPTED;
 
 public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorListener {
 
@@ -100,12 +101,17 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
         Requestable request = new UpdateRequest(update, frameworkId, executorId, agentEndpoint);
         try {
             HttpResponse response = request.createRequest().execute();
-
+            int statusCode = response.getStatusCode();
+            if (statusCode != SC_ACCEPTED) {
+                LOG.error("Failed to send status update, got status code {}", statusCode);
+                // TODO: mesos-hadoop completely ignores the return value of this call, what do?
+            }
         } catch (IOException e) {
             LOG.error("Error while sending update: {}", e.getMessage());
             backoff();
         }
-        return Status.DRIVER_ABORTED;
+
+        return Status.DRIVER_RUNNING;
     }
 
     @Override
