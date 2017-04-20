@@ -8,7 +8,6 @@ import com.google.protobuf.util.JsonFormat;
 import org.apache.mesos.v1.Protos.ExecutorInfo;
 import org.apache.mesos.v1.Protos.FrameworkID;
 import org.apache.mesos.v1.Protos.FrameworkInfo;
-import org.apache.mesos.v1.Protos.TaskInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,14 +15,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashSet;
-import java.util.Set;
 
 import static com.google.api.client.util.Preconditions.checkNotNull;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.mesos.v1.executor.Protos.Call.Subscribe;
-import static org.apache.mesos.v1.executor.Protos.Call.Update;
 import static org.apache.mesos.v1.executor.Protos.Event;
 
 
@@ -31,9 +27,6 @@ import static org.apache.mesos.v1.executor.Protos.Event;
 public class ExecutorConnection extends Thread {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorConnection.class);
-
-    private static final Set<TaskInfo> UNACKNOWLEDGED_TASKS = new HashSet<>();
-    private static final Set<Update> UNACKNOWLEDGED_UPDATES = new HashSet<>();
 
     private final ActionableListener listener;
     private final FrameworkInfo framework;
@@ -59,8 +52,8 @@ public class ExecutorConnection extends Thread {
     public void run() {
         while (true) {
             Subscribe subscription = Subscribe.newBuilder()
-                    .addAllUnacknowledgedTasks(UNACKNOWLEDGED_TASKS)
-                    .addAllUnacknowledgedUpdates(UNACKNOWLEDGED_UPDATES)
+                    .addAllUnacknowledgedTasks(listener.getUnacknowledgedTasks())
+                    .addAllUnacknowledgedUpdates(listener.getUnacknowledgedUpdates())
                     .build();
             Requestable req = new SubscribeRequest(subscription, framework, executorInfo);
             HttpRequest request = req.createRequest();
@@ -143,14 +136,6 @@ public class ExecutorConnection extends Thread {
 
     private void resetRetries() {
         retries = 0;
-    }
-
-    public Set<TaskInfo> getUnacknowledgedTasks() {
-        return UNACKNOWLEDGED_TASKS;
-    }
-
-    public Set<Update> getUnacknowledgedUpdates() {
-        return UNACKNOWLEDGED_UPDATES;
     }
 
     public ActionableListener getListener() {
