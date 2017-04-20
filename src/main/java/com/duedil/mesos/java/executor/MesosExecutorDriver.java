@@ -152,6 +152,7 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
             case KILL:
                 break;
             case ACKNOWLEDGED:
+                onAcknowledged(event);
                 break;
             case MESSAGE:
                 break;
@@ -168,6 +169,13 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
     }
 
     private void onAcknowledged(final Event event) {
+        TaskID taskId = event.getAcknowledged().getTaskId();
+        ByteString uuid = event.getAcknowledged().getUuid();
+
+        unacknowledgedUpdates.remove(uuid);
+        unacknowledgedTasks.remove(taskId);
+    }
+
     private void backoff() {
         // TODO - placeholder
     }
