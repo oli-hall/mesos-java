@@ -1,13 +1,11 @@
 package com.duedil.mesos.java.executor;
 
-import com.duedil.mesos.java.executor.api.Requestable;
 import com.duedil.mesos.java.executor.api.SubscribeRequest;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.protobuf.util.JsonFormat;
-import org.apache.mesos.v1.Protos.ExecutorInfo;
+import org.apache.mesos.v1.Protos.ExecutorID;
 import org.apache.mesos.v1.Protos.FrameworkID;
-import org.apache.mesos.v1.Protos.FrameworkInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 
 import static com.google.api.client.util.Preconditions.checkNotNull;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
@@ -28,35 +27,36 @@ public class ExecutorConnection extends Thread {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorConnection.class);
 
-    private final ActionableListener listener;
-    private final FrameworkInfo framework;
+    private final ActionableExecutorListener listener;
     private final FrameworkID frameworkId;
-    private final ExecutorInfo executorInfo;
+    private final ExecutorID executorId;
+    private final URI agentEndpoint;
     private final int maxRetries;
     static final int DEFAULT_MAX_RETRIES = 5;
     private int retries = 0;
 
-    public ExecutorConnection(FrameworkInfo framework, FrameworkID frameworkId, ExecutorInfo executorInfo, ActionableListener listener) {
-        this(framework, frameworkId, executorInfo, listener, DEFAULT_MAX_RETRIES);
+    ExecutorConnection(FrameworkID frameworkId, ExecutorID executorId, ActionableExecutorListener listener) {
+        this(frameworkId, executorId, listener, DEFAULT_MAX_RETRIES);
     }
 
-    public ExecutorConnection(FrameworkInfo framework, FrameworkID frameworkId, ExecutorInfo executorInfo, ActionableListener listener, int maxRetries) {
-        this.framework = checkNotNull(framework);
-        this.frameworkId = checkNotNull(frameworkId);
-        this.executorInfo = checkNotNull(executorInfo);
+    ExecutorConnection(FrameworkID frameworkId, ExecutorID executorId, ActionableExecutorListener listener,
+                       int maxRetries) {
         this.listener = checkNotNull(listener);
+        this.agentEndpoint = listener.getAgentEndpoint();
+        this.frameworkId = checkNotNull(frameworkId);
+        this.executorId = checkNotNull(executorId);
         this.maxRetries = maxRetries;
     }
 
     @Override
     public void run() {
+        // TODO: break out of this
         while (true) {
             Subscribe subscription = Subscribe.newBuilder()
                     .addAllUnacknowledgedTasks(listener.getUnacknowledgedTasks())
                     .addAllUnacknowledgedUpdates(listener.getUnacknowledgedUpdates())
                     .build();
-            Requestable req = new SubscribeRequest(subscription, framework, executorInfo);
-            HttpRequest request = req.createRequest();
+            HttpRequest request = new SubscribeRequest(subscription, frameworkId, executorId, agentEndpoint).createRequest();
 
             try {
                 HttpResponse response = request.execute();
@@ -138,23 +138,19 @@ public class ExecutorConnection extends Thread {
         retries = 0;
     }
 
-    public ActionableListener getListener() {
+    ActionableExecutorListener getListener() {
         return listener;
     }
 
-    public FrameworkInfo getFramework() {
-        return framework;
-    }
-
-    public FrameworkID getFrameworkId() {
+    FrameworkID getFrameworkId() {
         return frameworkId;
     }
 
-    public ExecutorInfo getExecutorInfo() {
-        return executorInfo;
+    ExecutorID getExecutorId() {
+        return executorId;
     }
 
-    public int getMaxRetries() {
+    int getMaxRetries() {
         return maxRetries;
     }
 
