@@ -215,7 +215,7 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
     private void onAcknowledged(final Event event) {
         TaskID taskId = event.getAcknowledged().getTaskId();
         ByteString uuid = event.getAcknowledged().getUuid();
-
+        LOG.debug("Got ACKNOWLEDGE for taskId/uuid {}/{}", taskId.toString(), uuid.toString());
         unacknowledgedUpdates.remove(uuid);
         unacknowledgedTasks.remove(taskId);
     }
