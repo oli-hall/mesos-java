@@ -32,45 +32,51 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableListener {
     }
 
     @Override
-    public void start() {
-        conn = new ExecutorConnection(framework, frameworkId, executorInfo, this);
+    public Status start() {
+        conn = new ExecutorConnection(frameworkId, executorId, this);
+        return Status.DRIVER_RUNNING;
     }
 
     @Override
-    public void stop() {
+    public Status stop() {
         // TODO: kill all the things
+        return Status.DRIVER_STOPPED;
     }
 
     @Override
-    public void abort() {
-
+    public Status abort() {
+        // TODO: kill all the things, perhaps differently
+        return Status.DRIVER_ABORTED;
     }
 
     @Override
-    public void join() {
+    public Status join() {
         try {
             conn.join();
         }
         catch (InterruptedException e) {
             LOG.error("Exception thrown waiting for connection join: {}", e.getMessage());
         }
+        return Status.DRIVER_RUNNING;
     }
 
     @Override
-    public void run() {
+    public Status run() {
         start();
         conn.run();
-        join();
+        return join();
     }
 
     @Override
-    public void sendStatusUpdate(Status status) {
+    public Status sendStatusUpdate(TaskStatus status) {
+        Update update = Update.newBuilder().setStatus(checkNotNull(status)).build();
 
+        return Status.DRIVER_ABORTED;
     }
 
     @Override
-    public void sendFrameworkMessage(byte[] data) {
-
+    public Status sendFrameworkMessage(byte[] data) {
+        return Status.DRIVER_ABORTED;
     }
 
     @Override
