@@ -1,11 +1,13 @@
 package com.duedil.mesos.java.executor;
 
+import com.google.protobuf.ByteString;
+import org.apache.mesos.v1.Protos.TaskID;
 import org.apache.mesos.v1.Protos.TaskInfo;
 import org.apache.mesos.v1.executor.Protos.Call.Update;
 import org.apache.mesos.v1.executor.Protos.Event;
 
 import java.net.URI;
-import java.util.Set;
+import java.util.Map;
 
 public interface ActionableExecutorListener {
 
@@ -15,9 +17,9 @@ public interface ActionableExecutorListener {
      */
     void onEvent(Event event);
 
-    Set<TaskInfo> getUnacknowledgedTasks();
+    Map<TaskID, TaskInfo> getUnacknowledgedTasks();
 
-    Set<Update> getUnacknowledgedUpdates();
+    Map<ByteString, Update> getUnacknowledgedUpdates();
 
     URI getAgentEndpoint();
 

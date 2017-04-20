@@ -3,10 +3,12 @@ package com.duedil.mesos.java.executor;
 import com.duedil.mesos.java.executor.api.Requestable;
 import com.duedil.mesos.java.executor.api.UpdateRequest;
 import com.google.api.client.http.HttpResponse;
+import com.google.protobuf.ByteString;
 import org.apache.mesos.v1.Protos.ExecutorID;
 import org.apache.mesos.v1.Protos.FrameworkID;
 import org.apache.mesos.v1.Protos.FrameworkInfo;
 import org.apache.mesos.v1.Protos.Status;
+import org.apache.mesos.v1.Protos.TaskID;
 import org.apache.mesos.v1.Protos.TaskInfo;
 import org.apache.mesos.v1.Protos.TaskStatus;
 import org.apache.mesos.v1.executor.Protos.Call.Update;
@@ -16,8 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.duedil.mesos.java.Utils.executorEndpoint;
 import static com.duedil.mesos.java.Utils.getEnv;
@@ -37,8 +39,8 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
     private final ExecutorID executorId;
     private ExecutorConnection conn;
     private final URI agentEndpoint;
-    private Set<TaskInfo> unacknowledgedTasks;
-    private Set<Update> unacknowledgedUpdates;
+    private final Map<TaskID, TaskInfo> unacknowledgedTasks;
+    private final Map<ByteString, Update> unacknowledgedUpdates;
 
     MesosExecutorDriver(Executor executor) {
         this.executor = checkNotNull(executor);
@@ -47,8 +49,8 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
         this.executorId  = ExecutorID.newBuilder().setValue(getEnv(ENV_EXECUTOR_ID)).build();
         this.conn = null;
         this.agentEndpoint = executorEndpoint(getEnv(ENV_AGENT_ENDPOINT));
-        this.unacknowledgedTasks = new HashSet<>();
-        this.unacknowledgedUpdates = new HashSet<>();
+        this.unacknowledgedTasks = new HashMap<>();
+        this.unacknowledgedUpdates = new HashMap<>();
     }
 
     @Override
@@ -89,9 +91,11 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
 
     @Override
     public Status sendStatusUpdate(TaskStatus status) {
-        Update update = Update.newBuilder().setStatus(checkNotNull(status)).build();
+        Update update = Update.newBuilder()
+                .setStatus(checkNotNull(status))
+                .build();
 
-        unacknowledgedUpdates.add(update);
+        unacknowledgedUpdates.put(status.getUuid(), update);
 
         Requestable request = new UpdateRequest(update, frameworkId, executorId, agentEndpoint);
         try {
@@ -152,12 +156,12 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
     }
 
     @Override
-    public Set<TaskInfo> getUnacknowledgedTasks() {
+    public Map<TaskID, TaskInfo> getUnacknowledgedTasks() {
         return unacknowledgedTasks;
     }
 
     @Override
-    public Set<Update> getUnacknowledgedUpdates() {
+    public Map<ByteString, Update> getUnacknowledgedUpdates() {
         return unacknowledgedUpdates;
     }
 
