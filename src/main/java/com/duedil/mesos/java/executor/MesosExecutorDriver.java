@@ -159,6 +159,7 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
                 onAcknowledged(event);
                 break;
             case MESSAGE:
+                onMessage(event);
                 break;
             case SHUTDOWN:
                 break;
@@ -170,6 +171,13 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
             default:
                 LOG.info("NOP event: {}", event.toString());
         }
+    }
+
+    private void onMessage(final Event event) {
+        Event.Message message = event.getMessage();
+        byte[] bytes = Base64.decodeBase64(message.getData().toByteArray());
+        String decodedMessage = new String(bytes);
+        LOG.debug("Message received from agent: {}", decodedMessage);
     }
 
     private void onKill(final Event event) {
