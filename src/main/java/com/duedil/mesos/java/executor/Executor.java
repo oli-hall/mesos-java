@@ -3,9 +3,8 @@ package com.duedil.mesos.java.executor;
 import org.apache.mesos.v1.Protos.AgentInfo;
 import org.apache.mesos.v1.Protos.ExecutorInfo;
 import org.apache.mesos.v1.Protos.FrameworkInfo;
-import org.apache.mesos.v1.Protos.Task;
 import org.apache.mesos.v1.Protos.TaskID;
-import org.apache.mesos.v1.executor.Protos.Event.Message;
+import org.apache.mesos.v1.Protos.TaskInfo;
 
 
 /**
@@ -38,7 +37,7 @@ public interface Executor {
      * or some simple computation, however, no other callbacks will be invoked on this executor
      * until this callback has returned.
      */
-    void launchTask(ExecutorDriver driver, Task task);
+    void launchTask(ExecutorDriver driver, TaskInfo task);
 
     /**
      * Invoked when a task running within this executor has been killed (via
@@ -52,7 +51,7 @@ public interface Executor {
      * Invoked when a framework message has arrived for this executor.  These messages are
      * best effort; do not expect a framework message to be retransmitted in any reliable fashion.
      */
-    void frameworkMessage(ExecutorDriver driver, Message message);
+    void frameworkMessage(ExecutorDriver driver, byte[] message);
 
     /**
      * Invoked when the executor should terminate all of its currently running tasks.  Note
@@ -66,5 +65,5 @@ public interface Executor {
      * Invoked when a fatal error has occurred with the executor and/or executor driver.
      * The driver will be aborted BEFORE invoking this callback.
      */
-    void error(ExecutorDriver driver, Message message);
+    void error(ExecutorDriver driver, String message);
 }
