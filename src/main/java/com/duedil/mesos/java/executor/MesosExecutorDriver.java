@@ -83,7 +83,7 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
         catch (InterruptedException e) {
             LOG.error("Exception thrown waiting for connection join: {}", e.getMessage());
         }
-        return Status.DRIVER_RUNNING;
+        return Status.DRIVER_STOPPED;
     }
 
     @Override
