@@ -144,6 +144,7 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
         LOG.debug("Event: {}", event.getMessage());
         switch (event.getType()) {
             case SUBSCRIBED:
+                onSubscribed(event);
                 break;
             case LAUNCH:
                 break;
@@ -166,6 +167,11 @@ public class MesosExecutorDriver implements ExecutorDriver, ActionableExecutorLi
             default:
                 LOG.info("NOP event: {}", event.toString());
         }
+    }
+
+    private void onSubscribed(final Event event) {
+        LOG.debug("Subscribed to agent");
+        this.framework = event.getSubscribed().getFrameworkInfo();
     }
 
     private void onAcknowledged(final Event event) {
